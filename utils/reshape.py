@@ -8,16 +8,26 @@ class Import_and_Shape_Data():
         self.num_of_channels = num_of_channels
         self.file = binary_file_name
         self.import_binary()
-        self.reshape_data()
+        self.reshape_binary_data()
 
     #Convert binary file to numpy array
     def import_binary(self):
-        self.raw_array = np.fromfile(self.file, dtype= 'uint16', count=- 1)
-        self.length = len(self.raw_array) #for tests
+        self.raw_array = np.fromfile(self.file, dtype= 'int16')
+        self.length = len(self.raw_array)
 
-    def reshape_data(self):
+    #Reshape binary file
+    def reshape_binary_data(self):
         recordings = int(self.length / self.num_of_channels)
-        data = np.reshape(self.raw_array, (self.num_of_channels, recordings))
+        data = np.reshape(self.raw_array, (recordings, self.num_of_channels))
         self.data = data
         return(data)
         assert ((self.length % self.num_of_channels) == 0), "Modulo error, there is a remainder"
+        assert data.shape[0] == self.length, "Shape is wrong"
+        assert data.shape[1] == self.num_of_channels, "Shape is wrong"
+
+#tests
+#Load and shape data
+# file = "/Users/freeman/Documents/saleem_lab/data/R21011_210915_CA1_1.csv"
+# data_object = Import_and_Shape_Data(file)
+# data = data_object.reshape_data()
+# print(data)
