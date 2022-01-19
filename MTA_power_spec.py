@@ -27,7 +27,7 @@ data_object = reshape.Import_and_Shape_Data(file)
 data = data_object.reshape_binary_data()
 
 #Parameters #Real signal is 20hz but downsample to 2hz
-original_fs = 20000 #Hz
+original_fs = 20000 #Hzs
 fs = 2000 #Hz
 downsample_factor = 10 #If 10. This takes a 20khz signal to a 2khz signal
 seconds_in_session = len(data[0:-1:downsample_factor, 0]) / 2000 #Number of seconds of the session

@@ -12,7 +12,7 @@ class Import_and_Shape_Data():
 
     #Convert binary file to numpy array
     def import_binary(self):
-        self.raw_array = np.fromfile(self.file, dtype= 'int16')
+        self.raw_array = np.fromfile(self.file, dtype= 'int16', count=-1)
         self.length = len(self.raw_array)
 
     #Reshape binary file
@@ -20,7 +20,7 @@ class Import_and_Shape_Data():
         recordings = int(self.length / self.num_of_channels)
         data = np.reshape(self.raw_array, (recordings, self.num_of_channels))
         self.data = data
-        return(data)
+        return(data.astype(float))
         assert ((self.length % self.num_of_channels) == 0), "Modulo error, there is a remainder"
         assert data.shape[0] == self.length, "Shape is wrong"
         assert data.shape[1] == self.num_of_channels, "Shape is wrong"
