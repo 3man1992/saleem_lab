@@ -5,6 +5,9 @@ Calculated using TW = len(data)ΔFs/2
 Increasing bandwidth also smooths the data at cost of computational effort.
 BW = TW * fs / len(data). As per Chronux. Where TW equals 3.
 However, GSP provides a calculate num tapers function which can do this for you.
+
+How to smooth?
+- Increase both num of tapers and NW together
 """
 
 #OS Libs
@@ -31,8 +34,8 @@ original_fs = 20000 #Hzs
 fs = 2000 #Hz
 downsample_factor = 10 #If 10. This takes a 20khz signal to a 2khz signal
 seconds_in_session = len(data[0:-1:downsample_factor, 0]) / 2000 #Number of seconds of the session
-NW = 5 #Time bandwidth product chronux recommends 3 - INCREASE TO SMOOTH DATA
-numtapers = 8#Number of tapers to use. Chronux recommends 5 - INCREASE TO IMPROVE ACCURACY OF EST
+NW = 15 #Time bandwidth product chronux recommends 3 - INCREASE TO SMOOTH DATA as it increases bandwidth
+numtapers = 25#Number of tapers to use. Chronux recommends 5 - INCREASE TO IMPROVE ACCURACY OF EST
 # nfft = 1028 * 2 #The length of the signal I want to calcualte the fourier transform of.
 #Has to be a power of 2 for computational efficiency. Helpful comparing signals of different sizes.
 # Also related to padding of the FFT
@@ -63,6 +66,7 @@ print("--- %s seconds ---" % (time.time() - start_time))
 print("")
 
 #Plotting configurations
+plt.title("Power spectral density analysis - 1 Channel at 2kHz")
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Power - Db')
 plt.xlim([0,80])
