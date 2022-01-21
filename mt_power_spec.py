@@ -10,6 +10,8 @@ How to smooth?
 - Increase both num of tapers and NW together
 """
 
+#test
+
 #OS Libs
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +27,7 @@ from utils import helper #Converts psd to decibal scale
 start_time = time.time()
 
 #Load and shape data
-file = "/Users/freeman/Documents/saleem_lab/data/R21011_210915_CA1_1.dat"
+file = "/Users/freeman/Documents/saleem_folder/data/R21011_210915_CA1_1.dat"
 data_object = reshape.Import_and_Shape_Data(file)
 data = data_object.reshape_binary_data()
 
@@ -35,7 +37,7 @@ fs = 2000 #Hz
 downsample_factor = 10 #If 10. This takes a 20khz signal to a 2khz signal
 seconds_in_session = len(data[0:-1:downsample_factor, 0]) / 2000 #Number of seconds of the session
 NW = 15 #Time bandwidth product chronux recommends 3 - INCREASE TO SMOOTH DATA as it increases bandwidth
-numtapers = 25#Number of tapers to use. Chronux recommends 5 - INCREASE TO IMPROVE ACCURACY OF EST
+numtapers = 25 #Number of tapers to use. Chronux recommends 5 - INCREASE TO IMPROVE ACCURACY OF EST
 # nfft = 1028 * 2 #The length of the signal I want to calcualte the fourier transform of.
 #Has to be a power of 2 for computational efficiency. Helpful comparing signals of different sizes.
 # Also related to padding of the FFT
