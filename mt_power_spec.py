@@ -8,6 +8,8 @@ However, GSPi provides a calculate num tapers function which can do this for you
 
 How to smooth?
 - Increase both num of tapers and NW together
+
+Works on mac but not windows for some reason...
 """
 
 #OS Libs
