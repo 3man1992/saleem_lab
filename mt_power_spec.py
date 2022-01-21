@@ -4,13 +4,11 @@ Increasing num tapers can increase accuracy of estimation but with significant c
 Calculated using TW = len(data)ΔFs/2
 Increasing bandwidth also smooths the data at cost of computational effort.
 BW = TW * fs / len(data). As per Chronux. Where TW equals 3.
-However, GSP provides a calculate num tapers function which can do this for you.
+However, GSPi provides a calculate num tapers function which can do this for you.
 
 How to smooth?
 - Increase both num of tapers and NW together
 """
-
-#test
 
 #OS Libs
 import numpy as np
