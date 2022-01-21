@@ -25,11 +25,8 @@ downsample_factor = 20 #If 10. This takes a 20khz signal to a 2khz signal
 seconds_in_session = len(data[0:-1:downsample_factor, 0]) / 2000 #Number of seconds of the session
 # NW = 50 #Time bandwidth product chronux recommends 3 - INCREASE TO SMOOTH DATA as it increases bandwidth
 numtapers = 1 #Number of tapers to use. Chronux recommends 5 - INCREASE TO IMPROVE ACCURACY OF EST
-nperseg   = 256 * 10 #Number of samples to use for taper window
+nperseg   = 256 * 10 #Number of samples to use for taper windowmHas to be a power of 2 for computational efficiency. Helpful comparing signals of different sizes.
 # noverlap  = 0 Number of points to overlap between segments. Default is nperseg // 8.
-# nfft = 1028 * 2 #The length of the signal I want to calcualte the fourier transform of.
-#Has to be a power of 2 for computational efficiency. Helpful comparing signals of different sizes.
-# Also related to padding of the FFT
 
 #Downsample and channel selection
 c1 = data[0:-1:downsample_factor, 0] #downsampled to speed up multi tapered estimation
@@ -40,9 +37,9 @@ filtered_signal = signal.sosfilt(sos, c1)
 
 #Compute Bandwidth possible with hardcoded NW due to large data size.
 #If increased too large I believe spectral leakage will occur
-# bandwidth = NW * fs / len(filtered_signal)
+# bandwidth = NW * fs / len(filtered_signal) #Uncomment for automatic bw calculation based on NW, fs and len(data)
 #bw of 2 works
-bandwidth = 1
+bandwidth = 1 #Hardcode based on the problem at hand
 
 #Compute NW as it has to be >1 - Modify these values to increase NW which should increase taper count
 #If greater than 1 room to decrease nperseg or bandwidth to increase temporal resolution
@@ -79,24 +76,6 @@ plt.show()
 print("")
 print("--- %s seconds ---" % (time.time() - start_time))
 print("")
-
-#Spectrogram using SIGNAL. Does't work
-# f, t, Sxx = signal.spectrogram(filtered_signal,
-#                                fs = fs)
-# plt.imshow(10 * np.log10(Sxx), aspect = 'auto')
-# # plt.pcolormesh(t, f, 10 * np.log10(Sxx))
-
-#Spectrogram using MATPLOTLIB - Works but still not as good
-# spectrum, freqs, t, im = plt.specgram(filtered_signal,
-#                                       NFFT = NFFT,
-#                                       Fs = fs,
-#                                       window = signal.get_window(('dpss', 3), NFFT),
-#                                       scale = 'dB')
-# plt.colorbar()
-# plt.xlabel('Time (Seconds)')
-# plt.ylabel('Frequency (Hz)')
-# plt.ylim(0, 80)
-# plt.show()
 
 #Compute the cwt method for computing the spectrogram
 # coefs_cwt, _, f_cwt, t_cwt, _ = gsp.cwt(data        = filtered_signal,
