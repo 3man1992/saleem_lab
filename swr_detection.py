@@ -4,68 +4,67 @@ from utils import reshape #Shapes the 1d array of mv into 2d array of [timepoint
 #OS libaries
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as plticker
 import time
 from scipy import signal
-
-#Core Lib
 from ripple_detection import Karlsson_ripple_detector, Kay_ripple_detector
 from ripple_detection.simulate import simulate_time
 from ripple_detection import filter_ripple_band
 
 #Load and shape data
-file = "/Users/freeman/Documents/saleem_folder/data/R21011_210915_CA1_1.dat"
+file = "/Users/freeman/Documents/saleem_folder/data/tomazzo_data/R21011_210915_CA1_1.dat"
 data_object = reshape.Import_and_Shape_Data(file)
 data = data_object.reshape_binary_data()
 
-#Paramters
+#channels
+channel_num = [48,49,18,1,0,50,34,36,3,2,51,32,28,16,4,52] #A single shank from Tomazzo Top to bottom
+
+#Parameters
 orginal_fs = 20000
-fs = 2000
-n_samples = len(data[0:-1:10, 0])
+fs = 5000
+down_sampling_factor = int(orginal_fs / fs)
+n_samples = len(data[0:-1:down_sampling_factor, 0]) #Selecting first channel irrelvant to sample length
 
-#Downsample and channel selection - channel 1
-data = data[0:-1:10, 0]
+#Downsample
+data = data[0:-1:down_sampling_factor, :] #Down sample across all channels
+print("len of data:", len(data))
 
-#Bandpass Filter
+#Bandpass Filter for SWRs
 sos = signal.butter(N = 5, Wn = [150, 250], btype = 'bandpass', output ='sos', fs = fs)
 filtered_signal = signal.sosfilt(sos, data)
-filtered_signal = np.reshape(filtered_signal, [n_samples, 1])
+print("len of filtered signal:", len(filtered_signal))
+
+#Remove noise from LFP signals to plot raw traces
+sos_1 = signal.butter(N = 5, Wn = [1, 600], btype = 'bandpass', output ='sos', fs = fs)
+raw_LFP_filtered = signal.sosfilt(sos_1, data)
 
 #Speed of the animal
 speed = np.zeros(n_samples) #Assume 0 for now
 
-#Time in 20hz
+#Time of session
 time = simulate_time(n_samples, fs)
+print("Time of session in seconds:", time[-1])
 
-#Detect ripples
-Karlsson_ripple_times = Kay_ripple_detector(time, filtered_signal, speed, fs, zscore_threshold=2.0)
+#Detect SWRs
+Karlsson_ripple_times = Kay_ripple_detector(time, filtered_signal, speed, fs, zscore_threshold=3.0)
+ripple_list = Karlsson_ripple_times.values
+print()
+print("Ripple window times:\n")
+print(Karlsson_ripple_times.values)
+print()
+print("Number of ripples detected:\n", len(Karlsson_ripple_times.values))
 
-#Investigate ripple data
-# print("Shape of ripple data", Karlsson_ripple_times.shape)
-ripple_list = Karlsson_ripple_times.iloc[0:9].values
-figs, axs = plt.subplots(3,3)
-figs.suptitle('9 ripples from channel 1')
-figs.supxlabel('Seconds')
-figs.supylabel('mV')
-ripple_index = 0
-for i in range(3):
-    for x in range(3):
-        axs[i, x].plot(time, filtered_signal[:, 0])
-        axs[i, x].set_xlim(ripple_list[ripple_index][0], ripple_list[ripple_index][1])
-        ripple_index += 1
-
-# print(Karlsson_ripple_times)
-# ripple1 = Karlsson_ripple_times.iloc[0].values
-# plt.plot(time, filtered_signal[:, 0])
-# plt.xlim(ripple1[0], ripple1[1])
-plt.show()
-
-#Plt WHOLE ripple detection + LFP signals
-# fig, ax = plt.subplots(figsize=(15, 3))
-# ax.plot(time, filtered_signal)
-# for ripple in Karlsson_ripple_times.itertuples():
-#     ax.axvspan(ripple.start_time, ripple.end_time, alpha=0.3, color='red', zorder=10)
-# plt.title("Kay ripple detection - Channel 1")
-# plt.xlabel('Time in seconds')
-# plt.ylabel('Mv')
-# plt.show()
+#Plot every ripple that was detected using Kay's method
+for ripple_id in range(len(Karlsson_ripple_times.values)):
+    fig, axs = plt.subplots(16, sharex=True)
+    #Plot 16 channels
+    for channel_id in range(16):
+        axs[ripple_id].plot(time, raw_LFP_filtered[:, channel_num[channel_id]])
+        axs[channel_id].set_xlim(ripple_list[ripple_id][0], ripple_list[ripple_id][1]) #Limit the x axis to the ripple_id window
+    fig.suptitle('Predicted ripple #:{} window, 16 raw traces from single shank'.format(ripple_id))
+    fig.supxlabel('Seconds')
+    fig.supylabel('mV')
+    fig.set_size_inches(10, 17) #width and height of image
+    plt.savefig("/Users/freeman/Documents/saleem_folder/viz/ripple_num_{}".format(ripple_id), dpi=100)
+    plt.close()
+    print("Single ripple file completed")
+print("Program finished")
