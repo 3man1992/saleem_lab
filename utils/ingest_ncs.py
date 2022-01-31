@@ -17,7 +17,7 @@ def convert_ncs2_np(directory_path, save_to_path, saved_file_name):
 
 #Insert strings to retrieve and save data as required
 dir_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/Raw_CSC'
-save_to_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays' #Change this to where you want the data stored
+save_to_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/' #Change this to where you want the data stored
 saved_file_name = 'Dark_day6_2507_19.npy' #Change this to what you want the thing to be called
 convert_ncs2_np(dir_path, save_to_path, saved_file_name)
 
