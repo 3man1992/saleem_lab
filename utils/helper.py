@@ -8,9 +8,10 @@ def dB(x, out=None):
         np.multiply(out, 10, out) #Convert power into decibals which is a log scale
 
 def downsample(data, original_fs, desired_fs):
-    down_sampling_factor = int(original_fs/ desired_fs)
+    down_sampling_factor = int(original_fs / desired_fs)
     down_sampled_data    = data[0:-1:down_sampling_factor, :]
-    return down_sampled_data
+    num_of_samples = len(data[0:-1:down_sampling_factor, 0])
+    return down_sampled_data, num_of_samples
 
 # #Convert 64 channels into 16 tetrodes - convert into function - unfinished code not needed for tomazzo data as silicon probes have a different geometry to normal tetrodes
 # tetrode_data = {}
