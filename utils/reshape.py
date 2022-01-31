@@ -4,11 +4,13 @@ import numpy as np
 
 #Import the binary file, and convert it from a 1d array to a 2d array with an index relating to channel number
 class Import_and_Shape_Data():
-    def __init__(self, binary_file_name, num_of_channels = 64):
+    def __init__(self, binary_file_name, num_of_channels, sampling_frequency):
         self.num_of_channels = num_of_channels
         self.file = binary_file_name
         self.import_binary()
         self.reshape_binary_data()
+        self.fs = sampling_frequency
+        self.n = len(self.data[:, 0]) #selecting length of first channel to represent n samples
 
     #Convert binary file to numpy array
     def import_binary(self):
@@ -24,6 +26,7 @@ class Import_and_Shape_Data():
         assert ((self.length % self.num_of_channels) == 0), "Modulo error, there is a remainder"
         assert data.shape[0] == self.length, "Shape is wrong"
         assert data.shape[1] == self.num_of_channels, "Shape is wrong"
+
 
 #tests
 #Load and shape data
