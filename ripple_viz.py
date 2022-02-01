@@ -27,7 +27,7 @@ print("Lenght of time array", len(time))
 
 padding = 1000 #Adds 0.5 seconds to index either side
 
-#Plot every ripple that was detected using Kay's method - plot first 20 ripples
+#Plot every ripple that was detected using Kay's method - plot first 50 ripples as a test
 for ripple_id in range(50):
     fig, axs = plt.subplots(nrows = num_of_channels, ncols = 2, sharex=True)
     ripple_start_index = int(ripple_times[ripple_id][0] * fs) - padding
