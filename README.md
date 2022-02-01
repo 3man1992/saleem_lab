@@ -14,6 +14,11 @@ Below is an example output from the MT_spectrogram script which utilises multi-t
   <img width="601" alt="Screenshot 2022-01-21 at 16 09 03" src="https://user-images.githubusercontent.com/22481774/150560602-ded88fba-0434-4d21-a260-2c598f3c338c.png">
 </p>
 
+Below are example raw traces of a sharp wave ripple detection algorithm compared to bandpass filtered signals. Each channel is from a single tetrode.
+
+<p align="center">
+  <img width="528" alt="Screenshot 2022-01-31 at 17 19 47" src="https://user-images.githubusercontent.com/22481774/151986847-94992946-ac9d-48a3-a4e9-1c3248012d6e.png">
+</p>
 
 Error message handling:
 + ValueError: 'n_tapers' of 5 is greater than the 1 that satisfied the minimum energy concentration criteria of 0.5. -> Change the number of tapers used to the recommended number
