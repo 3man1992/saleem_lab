@@ -15,12 +15,12 @@ def convert_ncs2_np(directory_path, save_to_path, saved_file_name):
     np.save(save_to_path + saved_file_name, numpy_sig)
     return None #saving the array is the function
 
-#Insert strings to retrieve and save data as required
-dir_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/Raw_CSC'
-save_to_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/' #Change this to where you want the data stored
-saved_file_name = 'Dark_day6_2507_19.npy' #Change this to what you want the thing to be called
-convert_ncs2_np(dir_path, save_to_path, saved_file_name)
+"""Change the dir_path to the new directory containing your data, change the save to path to a preferred place on
+your computer and name the file name. Remember that Raw CSC file as produced by martha has a space in it so you
+have to replace the space with a underscore"""
 
-#Load the pre-saved numpy array
-# data = np.load("neo_array.npy")
-# print(data.shape)
+#Insert strings to retrieve and save data as required
+dir_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Ymaze_Day3_220719/Raw_CSC'
+save_to_path = '/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/' #Change this to where you want the data stored
+saved_file_name = 'Ymaze_Day3_220719.npy' #Change this to what you want the thing to be called
+convert_ncs2_np(dir_path, save_to_path, saved_file_name)

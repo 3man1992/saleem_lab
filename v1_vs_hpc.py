@@ -1,3 +1,9 @@
+"""How to interupt memory tests:
+The first column represents the line number of the code that has been profiled,
+the second column (Mem usage) the memory usage of the Python interpreter after that line has been executed.
+The third column (Increment) represents the difference in memory of the current line with respect to the last one.
+The last column (Line Contents) prints the code that has been profiled."""
+
 from mt_power_spec import power_spectral_density
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,17 +12,44 @@ from ripple_detection.simulate import simulate_time
 from ripple_detection import filter_ripple_band
 import ghostipy as gsp
 from visulisations.spectrogram_funcs import cwt, wsst
+from visulisations.mua import filt_mua, gaussian_smooth, threshold
+from memory_profiler import profile
+
+# #Memory analysis code by profile - Uncomment to analyse memory components of intensive processes
+# filt_mua = profile(filt_mua)
+# gaussian_smooth = profile(gaussian_smooth)
+# threshold = profile(threshold)
 
 #Parameters
 org_fs = 30000
 fs = 2000
 padding = 1000 #Adds 0.5 seconds to index either side
+mua_fs = 6000
 
 #Load data and preprocess
 ripple_times = np.load("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19_ripple_times.npy")
-matrix = np.load("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19.npy")
-hpc_data = matrix[:, 8:] #select channels
-visual_data = matrix[:, :4] #select channels
+lfp_matrix = np.load("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19.npy")
+downsampled_lfp_matrix, n_samples = helper.downsample(lfp_matrix,
+                                                      org_fs,
+                                                      desired_fs = mua_fs)
+#Mua code
+filtered_data = filt_mua(lfp_data = downsampled_lfp_matrix,
+                         fs = mua_fs)
+mua_activity  = threshold(filtered_data)
+smoothed_mua = gaussian_smooth(mua_activity)
+
+# smoothed_data = gaussian_smooth(data = filtered_data,
+#                                 sampling_frequency = mua_fs)
+
+#PLotting
+mua_time = simulate_time(n_samples, mua_fs)
+plt.plot(mua_time, smoothed_mua[:,0])
+plt.xlabel("Seconds")
+plt.title("MUA activity, smoothed to 50ms, threshold 4SD, fs = 6kHz")
+plt.show()
+
+hpc_data = lfp_matrix[:, 8:] #select channels
+visual_data = lfp_matrix[:, :4] #select channels
 num_of_channels = hpc_data.shape[1]
 raw_data, n_samples = helper.downsample(hpc_data, org_fs, fs)
 raw_visual_data, visual_n_samples = helper.downsample(visual_data, org_fs, fs)
