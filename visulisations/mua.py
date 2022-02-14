@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 from scipy.stats import zscore
 import numpy as np
-from memory_profiler import profile
+# from memory_profiler import profile
 import sys
 import pandas as pd
 import multiprocessing as mp
@@ -84,10 +84,12 @@ def calculate_mua(lfp_data, fs):
     """Takes in lfp_data, filters it with a bandpass
     and then applys zscore thresholding whilst setting samples below threshold
     to zero"""
-    pool = mp.Pool(mp.cpu_count())
+    # pool = mp.Pool(processes=4)
     filtered_lfp = filt_mua(lfp_data, fs)
-    mua = pool.apply(threshold(filtered_lfp))
-    return mua
+    # result = pool.map(threshold, filtered_lfp)
+    # pool.close()
+    # pool.join()
+    return filtered_lfp
 
 #Takes x number of samples, averages them and returns a binned version
 #so numrow2avg = 5 will take every 5 rows avg and then return
