@@ -1,13 +1,9 @@
 import statsmodels.api as sm
 import numpy as np
+import matplotlib.pyplot as plt
 
 #Define tag lag calc func
 def time_lag_coords(binned_data, channel):
-    # I need to refactor this can't have channel selection here
-    #Set channel indexs for plotting
-    visual_channels = [0, 1, 2, 3, 4, 5, 6, 7]
-    hippocampal_channels = [8, 9, 10, 11]
-
     """A func that takes in binned MUA focusing on a given channel to return the time lag
     between the vc and the hpc. Runs both forwards and backwards to get positive and negative lags
 
@@ -16,6 +12,15 @@ def time_lag_coords(binned_data, channel):
         - temporal_coeffs: Creates an array of temporal coefficients of length bin_window * 2
         - arg_max_temporal_index: Which bin is the max temp coeff in
         - arg_max_value: What is the amplitude of the coeff"""
+
+    # I need to refactor this can't have channel selection here
+    #Variation 1
+    visual_channels =      [0, 1,  2,  3, 4, 5,  6,  7]
+    hippocampal_channels = [8, 9, 10, 11, 8, 9, 10, 11]
+
+    # #Variation 2
+    # visual_channels =      [4, 5, 6, 7, 8, 9, 10, 11]
+    # hippocampal_channels = [0, 1, 2, 3, 0, 1, 2, 3]
 
     #Define how long before and after t to compare temporal lags
     bin_window = 50 #E.g 50 would set 50ms before and after t
@@ -34,13 +39,17 @@ def time_lag_coords(binned_data, channel):
     reversed_first_component = first_component[::-1]
     temporal_coeffs = list(reversed_first_component) + list(dark_corrcoeffs_forward[0:bin_window + 1])
 
+    #Print if list is empty for some reason - bug
+    if not temporal_coeffs: print('List of coeffs is empty for some reason, expected bug')
+
     #Locations the bin of the max temp coeff and the value its self
     argmax = np.argmax(np.asarray(temporal_coeffs)) #Return indice of highest coeff
     arg_max_temporal_index = x[argmax] #Return the bin of the argmax temp coeff
     arg_max_value = temporal_coeffs[argmax]
+    print("The max coeff is", arg_max_value)
 
     #Unit Tests
-    assert arg_max_value < 1 or arg_max_value > -1, "Temporal coefficient {} is out of loggical range".format(arg_max_value)
+    assert arg_max_value < 1 or arg_max_value > -1, "Temporal coefficient {} is out of logical range".format(arg_max_value)
 
     return(x, temporal_coeffs, arg_max_temporal_index, arg_max_value)
 
@@ -63,6 +72,8 @@ def scatter_temp_coeff(binned_dark_data, binned_light_data, number_of_channels):
 
     #Loop through channels, call temp lag func and add to dics
     for channel in range(number_of_channels):
+        print('Comparing channel index: {}'.format(channel))
+
         #Dark
         dark_x, dark_temporal_coeffs, dark_arg_max_temporal_index, dark_arg_max_value     = time_lag_coords(binned_dark_data, channel)
         dark_lags[channel]  = dark_arg_max_temporal_index
@@ -109,3 +120,20 @@ def time_lag():
     fig.suptitle("Whole session: Temporal lag coefficients between HPC and VC across channels \n Positive lag is hpc preceding vc")
     plt.show()
     plt.savefig("/Users/freeman/Documents/saleem_folder/viz/temporal_coordination")
+
+#Produce scatter for whole session comparing light and dark
+def whole_session_plot(dark_mua, light_mua):
+    binned_dark_data =  bin_mua(dark_mua, 60).to_numpy() #change second param for different bin size
+    binned_light_data = bin_mua(light_mua, 60).to_numpy() #change second param for different bin size
+    light_lag_values, light_lag_max, dark_lag_values, dark_lag_max = scatter_temp_coeff(binned_dark_data,
+                                                                                        binned_light_data,
+                                                                                        8)
+    #Uncomment for plot
+    # plt.scatter(light_lag_values, light_lag_max, color='r', label='light conditions')
+    # plt.scatter(dark_lag_values, dark_lag_max, color='b', label='dark conditions')
+    # plt.legend()
+    # plt.xlabel('Time lag in 10ms')
+    # plt.ylabel('Argmax coeff')
+    # plt.axvline(x=0, color='k', linestyle ='--')
+    # plt.show()
+    return (light_lag_values, light_lag_max, dark_lag_values, dark_lag_max)
