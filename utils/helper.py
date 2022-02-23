@@ -1,7 +1,6 @@
 import numpy as np
-# from utils.matlab_to_pythonDict import convert_matlab_struct
-from matlab_to_pythonDict import convert_matlab_struct
-
+import sys
+from utils.matlab_to_pythonDict import convert_matlab_struct
 
 def dB(x, out=None):
     if out is None:
@@ -18,13 +17,10 @@ def downsample(data, original_fs, desired_fs):
 
 def extract_variables_to_determine_sleep(matlab_file_path):
     obj = convert_matlab_struct(matlab_file_path)
-    velocity = obj.dictionary['v_cm']
-    time = obj.dictionary['t']
-    linear_time = obj.extract_structs_within_structs()
-    return(velocity, time, linear)
+    linear_time, time, velocity = obj.extract_structs_within_structs()
+    return(velocity, time, linear_time)
 
-def determine_sleep(time, linear):
-    print(linear)
-
-velocity, time, linear = extract_variables_to_determine_sleep("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/extracted_position.mat")
-determine_sleep(time, linear)
+def determine_sleep_times(time, linear_time):
+    pre_task_sleep_time = list(filter(lambda x: x < linear_time[0], time))
+    post_task_sleep_time = list(filter(lambda x: x > linear_time[-1], time))
+    return(pre_task_sleep_time, post_task_sleep_time)
