@@ -12,16 +12,15 @@ from ripple_detection.simulate import simulate_time
 from ripple_detection import filter_ripple_band
 
 #Parameters
-org_fs = 30000
-fs = 2000
+org_fs = 30000 #The FS the device recorded at
+fs = 2000 #The FS you wish the data to become
 
 #Load, downsample and filter data
 matrix = np.load("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19.npy")
-raw_data, n_samples = helper.downsample(matrix, org_fs, fs)
+raw_data, n_samples = helper.downsample(matrix, org_fs, fs) #Downsample the data
 filtered_signal = filter_ripple_band(raw_data)
 
 #Select channels if required to select ripples from
-# channel_num = [48,49,18,1,0,50,34,36,3,2,51,32,28,16,4,52] #A single shank from Tomazzo Top to bottom
 filtered_signal = filtered_signal[:, 8:]
 print('Number of channels: ', filtered_signal.shape[1])
 
@@ -33,6 +32,7 @@ speed = speed[:len(filtered_signal)] #The ncs conversion file looses some data s
 print("Len of velocity", len(speed))
 print("Len of signal", len(filtered_signal))
 print("Time of session in seconds:", time[-1])
+print("len of time", len(time))
 assert len(speed) == len(filtered_signal), "The two don't match, caused by error from ncs import and indexing hasn't rectified len error"
 
 #Detect SWRs

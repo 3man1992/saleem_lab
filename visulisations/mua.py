@@ -30,6 +30,7 @@ def gaussian_smooth(data):
     this was taken from the scipy source code
     Thus with a truncate of 8 and a sigma of 25, 200 samples are chosen
     Which is approx 3ms as 60 samples per ms
+    6 samples per milisecond. So a 3ms window would be 18 sample window
     Window is in millseconds if you want 500ms type 500"""
 
     print("\nCommencing guassian smoothing of multi unit activity")
