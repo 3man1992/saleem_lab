@@ -81,9 +81,16 @@ class RippleAnalysis:
 org_fs = 30000
 fs = 2000
 ripple_array = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19_ripple_times.npy"
-lfp_array = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19.npy"
+lfp_array    = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/Dark_day6_2507_19.npy"
+mat_file     = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/extracted_position.mat"
 hippocampal_channels = [8, 9, 10] #Removed 11 as picking up noise
 padding = 250 #Adds 0.5 seconds to index either side
+
+#Calculate pre and post sleep times
+velocity, time, linear_time = helper.extract_variables_to_determine_sleep(mat_file)
+pre_task_sleep_time, post_task_sleep_time = helper.determine_sleep_times(time, linear_time)
+
+print(pre_task_sleep_time)
 
 #Create the ripple object with the above parrameters
 obj = RippleAnalysis(original_fs  = org_fs,
