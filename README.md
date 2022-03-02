@@ -2,6 +2,9 @@
 
 This github repo is a collection of knowledge gained during my PhD rotation in the Saleem Lab. Primarily this repo is a signal processing repository for analysing local field potential (LFP) data from the hippocampus.
 
+Some useful general scripts included are:
++ A matlab (.mat) converter script into python dictionarys. This file is found within utils and is called auto_mat_to_python.py
+
 Below is an example output from the MTA_power_spec script which utilises multi-taper analysis to produce a power spectral density estimation for a single channel from a tetrode recording.
 
 <p align="center">
