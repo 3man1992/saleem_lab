@@ -57,5 +57,7 @@ class convert_matlab_struct:
         data = loadmat(filename, struct_as_record=False, squeeze_me=True)
         return self._check_keys(data)
 
-file = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/extracted_position.mat"
-obj = convert_matlab_struct(file)
+#Test function works
+# if __name__ == "__main__":
+#     file = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/extracted_position.mat"
+#     obj = convert_matlab_struct(file)
