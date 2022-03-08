@@ -97,18 +97,16 @@ for ripple_id in range(1):
     axs[2][0].plot(seg_time, swr_hippocampus, 'k')
     axs[2][0].margins(x=0)
     axs[2][0].set_title('Ripple 150-250hz : HPC')
-    axs[2][0].set_ylabel('hZ')
+    axs[2][0].set_ylabel('mV')
     axs[2][0].get_xaxis().set_visible(False)
 
     axs[2][1].plot(seg_time, swr_visual, 'k')
     axs[2][1].margins(x=0)
     axs[2][1].set_title('Ripple 150-250hz : VC')
+    axs[2][1].get_xaxis().set_visible(False)
 
     #Plot the graphs
     plt.show()
-
-
-
 
 # #Mua code
 # filtered_data = filt_mua(lfp_data = downsampled_lfp_matrix,
