@@ -33,3 +33,17 @@ def determine_sleep_times(time, linear_time):
     pre_task_sleep_time = list(filter(lambda x: x < linear_time[0], time))
     post_task_sleep_time = list(filter(lambda x: x > linear_time[-1], time))
     return(pre_task_sleep_time, post_task_sleep_time)
+
+def smooth(signal, sigma):
+    #Smooth the filtered data with gaussian
+    """Uses a guassian filter from scipy the window is calculated using int(truncate * sigma + 0.5)
+    This was taken from the scipy source code. Thus to obtain a window of 60ms. You need 10 samples. Given 6000hz.
+    As 6 samples per milisecond. So a 60ms window would be a 10 sample window. Which can be achieved with sigma 7"""
+
+    truncate = 8 #Truncate the filter at this many standard deviations. Default is 4.0.
+    # sigma = 1000 #Chosen from truncate * sigma + 0.5
+    smooth_signal = gaussian_filter(input = signal,
+                                    sigma = sigma,
+                                    truncate = truncate,
+                                    mode = 'constant')
+    return(smooth_signal)
