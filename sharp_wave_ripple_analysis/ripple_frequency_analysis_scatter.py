@@ -90,7 +90,7 @@ plt.scatter(pre, post, label = 'Dark Condition')
 
 plt.plot([0, 30], [0, 30], color = 'k', linestyle='dashed')
 plt.legend()
-plt.title('Average number of SWRs per minute')
+plt.title('Average number of SWRs per minute', fontsize = 20)
 plt.xlabel('Pre_sleep')
 plt.ylabel('Post_sleep')
 plt.xlim(0, 30)

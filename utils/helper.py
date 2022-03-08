@@ -1,6 +1,14 @@
 import numpy as np
 import sys
-from utils.matlab_to_pythonDict import convert_matlab_struct
+from utils.convert_and_ingest_data_types.auto_mat_to_python import convert_matlab_struct
+import resampy
+
+def interpolate(variable, current_fs, desired_fs):
+    """Converts a lower sampled variable to match a higher sampled varible"""
+    interpolated_variable = resampy.resample(np.asarray(variable),
+                                             current_fs,
+                                             desired_fs)
+    return(interpolated_variable)
 
 def dB(x, out=None):
     if out is None:
@@ -10,6 +18,7 @@ def dB(x, out=None):
         np.multiply(out, 10, out) #Convert power into decibals which is a log scale
 
 def downsample(data, original_fs, desired_fs):
+    """Down samples mV data to make it easier to process"""
     down_sampling_factor = int(original_fs / desired_fs)
     down_sampled_data    = data[0:-1:down_sampling_factor, :]
     num_of_samples = len(data[0:-1:down_sampling_factor, 0])

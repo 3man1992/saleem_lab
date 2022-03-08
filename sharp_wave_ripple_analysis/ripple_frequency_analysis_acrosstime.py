@@ -13,6 +13,8 @@ class RippleDetails:
                  lfp_data,
                  hippocampus_channels):
 
+        print("!!!!!!!!HAVE YOU UPDATED HPC CHANNEL INDEX!!!!!!!!!")
+
         print("\nAggregating details about ripples into Python Object")
 
         #Assign namespaces
@@ -77,9 +79,10 @@ class RippleDetails:
 org_fs = 30000
 fs = 2000
 hpc_channels = [8,9,10]
-pre_sleep_ripple_file_path  = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/pre_sleep_Ripples_for_QBLU_Dark_Day9_290719.npy"
-post_sleep_ripple_file_path = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/post_sleep_Ripples_for_QBLU_Dark_Day9_290719.npy"
-lfp = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/QBLU_Dark_Day9_290719.npy"
+pre_sleep_ripple_file_path  = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/pre_sleep_Ripples_for_QBLU_Dark_Day5_250719.npy"
+post_sleep_ripple_file_path = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/post_sleep_Ripples_for_QBLU_Dark_Day5_250719.npy"
+lfp = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/QBLU_Dark_Day5_250719.npy"
+file_name = "QBLU_Dark_Day5_250719"
 
 #Pre sleep details obj created
 pre_sleep = RippleDetails(original_fs = org_fs,
@@ -105,9 +108,13 @@ def calc_ripples_per_minute(total_time_in_seconds, ripple_centres):
                                          bins = bins)
         return(counts)
 
-pre_counts  = calc_ripples_per_minute(7200, pre_sleep_ripple_centers)
-post_counts = calc_ripples_per_minute(7200, post_sleep_ripple_centers)
+pre_counts  = calc_ripples_per_minute(3600, pre_sleep_ripple_centers)
+post_counts = calc_ripples_per_minute(3600, post_sleep_ripple_centers)
 
-plt.plot(pre_counts, color='k')
-plt.plot(post_counts, color ='r')
+plt.plot(pre_counts,  color='b',   label = "Pre-Task Sleep")
+plt.plot(post_counts, color ='r',  label = "Post-Task Sleep")
+plt.xlabel("Sleep time (Minutes)")
+plt.ylabel("Ripple Frequency / Minute")
+plt.title("Ripple frequency for pre task sleep vs post task sleep: {}".format(file_name))
+plt.legend()
 plt.show()
