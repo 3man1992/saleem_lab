@@ -66,7 +66,7 @@ class RippleAnalysis:
     def smooth(self, signal):
         #Smooth the filtered data with gaussian
         """Uses a guassian filter from scipy the window is calculated using int(truncate * sigma + 0.5)
-        This was taken from the scipy source code. Thus to obtain a window of 60ms. You need 10 samples.
+        This was taken from the scipy source code. Thus to obtain a window of 60ms. You need 10 samples. Given 6000hz.
         As 6 samples per milisecond. So a 60ms window would be a 10 sample window. Which can be achieved with sigma 7"""
 
         truncate = 8 #Truncate the filter at this many standard deviations. Default is 4.0.

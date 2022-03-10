@@ -1,13 +1,12 @@
 """mua = mutli unit activity"""
 
 #Libraries requried
-from utils.filters import butter_bandpass_filter
+from utils.digital_filters import butter_bandpass_filter, highpass_filtfilt
 import time
 import matplotlib.pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
 from scipy.stats import zscore
 import numpy as np
-# from memory_profiler import profile
 import sys
 import pandas as pd
 import multiprocessing as mp
@@ -51,6 +50,7 @@ def threshold_binary(filtered_lfp):
     start_time = time.time()  #Time this function
     zscore_threshold = 4.0 #What sd above mean should be considered multi unit activity
     zscored_data = zscore(filtered_lfp) #Calculate z scores for smoothed lfp
+    print(zscored_data)
     is_above_threshold = abs(zscored_data) >= zscore_threshold #Only consider data above threshold take absolute values
     is_below_threshold = abs(zscored_data) < zscore_threshold #Only consider data above threshold take absolute values
     shape_of_lfps = is_above_threshold.shape
@@ -66,31 +66,31 @@ def threshold_binary(filtered_lfp):
 
 #Threshold to binary
 def threshold(filtered_lfp):
+    """Take the whole filtered signal, zscore the whole array, return
+    mV that are more than 3sd away from mean. Else set to zero"""
     print("nCommencing thresholding of multi unit activity")
     start_time = time.time()  #Time this function
     zscore_threshold = 3.0 #What sd above mean should be considered multi unit activity
-    zscored_data = zscore(filtered_lfp) #Calculate z scores for smoothed lfp
+    zscored_data = zscore(filtered_lfp, axis=None) #Calculate z scores along whole array
     is_above_threshold = abs(zscored_data) >= zscore_threshold #Only consider data above threshold take absolute values
     is_below_threshold = abs(zscored_data) < zscore_threshold #Only consider data above threshold take absolute values
-    shape_of_lfps = is_above_threshold.shape
     accepted_mua =  np.where(is_above_threshold,
                     filtered_lfp,
                     0) #If above threshold pass through, else set mili volts to zero
     print("Thresholding took: %s seconds to compute" % (time.time() - start_time)) #How long did filt filt take
+    #Tests
+    shape_of_lfps = is_above_threshold.shape
     assert accepted_mua.shape == shape_of_lfps, "Error in shape of output"
     return(accepted_mua)
 
 #Return mua activity
-def calculate_mua(lfp_data, fs):
-    """Takes in lfp_data, filters it with a bandpass
+def calculate_mua(signal, fs):
+    """Takes in local field recordings, filters it with a highpass filt filt
     and then applys zscore thresholding whilst setting samples below threshold
     to zero"""
-    # pool = mp.Pool(processes=4)
-    filtered_lfp = filt_mua(lfp_data, fs)
-    # result = pool.map(threshold, filtered_lfp)
-    # pool.close()
-    # pool.join()
-    return filtered_lfp
+    mua_signal = highpass_filtfilt(signal, fs, 500) #Highpass above 500hz
+    mua_signal = threshold(mua_signal)
+    return mua_signal
 
 #Takes x number of samples, averages them and returns a binned version
 #so numrow2avg = 5 will take every 5 rows avg and then return

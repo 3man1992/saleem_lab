@@ -1,39 +1,40 @@
-# from mt_power_spec import power_spectral_density
-# import ghostipy as gsp
-# from visulisations.mua import filt_mua, gaussian_smooth, threshold
-
 #Custom Libaries
 from utils import helper
 from utils.meta_data import Meta
 from visulisations.spectrogram_funcs import cwt, wsst
+from visulisations.mua import filt_mua, threshold, calculate_mua
+from utils.convert_and_ingest_data_types.auto_mat_to_python import convert_matlab_struct
 
 #OS Libaries
 from ripple_detection.simulate import simulate_time
 import numpy as np
 import matplotlib.pyplot as plt
 from ripple_detection import filter_ripple_band
+from scipy.signal import savgol_filter
 
 #Load data
 obj   = Meta()
 base_path = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/"
-pre_sleep_ripple_times = np.load(base_path + obj.light["Day_7_Light"]["pre"])
-pre_sleep_LFP = np.load(base_path + obj.light["Day_7_Light"]["lfp"])
+pre_sleep_ripple_times  = np.load(base_path + obj.light["Day_7_Light"]["pre"])
+post_sleep_ripple_times = np.load(base_path + obj.light["Day_7_Light"]["post"])
+LFP = np.load(base_path + obj.light["Day_7_Light"]["lfp"])
+mat_file = obj.light["Day_7_Light"]["mat"]
 
 #Parameters
 org_fs = 30000 #What is the original fs of the ephys recording device
 fs = 6000 #What do you want to downsample the data to
-padding = 1500 #What extra time do you want on ripple window - If fs is 3000 then 1500 is half a second either side
+padding = 3000 #What extra time do you want on ripple window - If fs is 3000 then 1500 is half a second either side
 
 #Downsample LFP data to make it faster to process
-downsampled_lfp_matrix, n_samples = helper.downsample(pre_sleep_LFP,
+downsampled_lfp_matrix, n_samples = helper.downsample(LFP,
                                                       org_fs,
                                                       desired_fs = fs)
 
 #Select Visual Cortex and Hippocampal channels
-visual_lfp = downsampled_lfp_matrix[:,
-                                    slice(obj.light["Day_7_Light"]["vc_chans"][0],
-                                          obj.light["Day_7_Light"]["vc_chans"][-1] + 1,
-                                          1)]
+visual_lfp      = downsampled_lfp_matrix[:,
+                                        slice(obj.light["Day_7_Light"]["vc_chans"][0],
+                                              obj.light["Day_7_Light"]["vc_chans"][-1] + 1,
+                                              1)]
 hippocampus_lfp = downsampled_lfp_matrix[:,
                                          slice(obj.light["Day_7_Light"]["hpc_chans"][0],
                                                obj.light["Day_7_Light"]["hpc_chans"][-1] + 1,
@@ -46,39 +47,130 @@ swr_hippocampus = filter_ripple_band(hippocampus_lfp)
 #Simulate time
 time = simulate_time(n_samples, fs)
 
-#Plot per ripple
-for ripple_id in range(1):
-    #Define a 4 by 4 grid
-    fig, axs = plt.subplots(nrows = 4, ncols = 4, sharey = 'row')
+#Mua activity calculations
+visual_mua      = calculate_mua(visual_lfp[:, 0], fs)
+hippocampus_mua = calculate_mua(hippocampus_lfp[:, 0], fs)
 
-    #Create ripple windows and padding for x axis
-    ripple_start_index = int(pre_sleep_ripple_times[ripple_id][0] * fs) - padding
-    ripple_end_index = int(pre_sleep_ripple_times[ripple_id][1] * fs) + padding
-    seg_time = time[ripple_start_index : ripple_end_index]
+#Calculate buffer for post task ripple analysis
+matlab_object = convert_matlab_struct(mat_file)
+time_mat = matlab_object.dic['t']
+linear_time = matlab_object.dic['linear']['timestamps']
+pre_task_sleep_time, post_task_sleep_time = helper.determine_sleep_times(time_mat, linear_time)
+buffer = (post_task_sleep_time[0] - pre_task_sleep_time[0]) * fs
+
+#Define a function to output differences for pre task sleep and post task sleep
+def plot_pre_or_post_ripples(ripple_times, ripple_id, post_task_buffer):
+    """Takes in pre or post sleep ripples and returns:
+    the relevant indexed data. Post task buffer is used to ensure index is correct
+    considering post task occurs midway lfp signal and time starts from 0.
+    Set post_task_buffer to 0 if calculating pre-sleep-ripples"""
+
+    #Create indexes per ripple data
+    ripple_start_index = int(ripple_times[ripple_id][0] * fs + post_task_buffer) - padding
+    ripple_end_index   = int(ripple_times[ripple_id][1] * fs + post_task_buffer) + padding
+    seg_time           = time[ripple_start_index : ripple_end_index]
 
     #Raw data for one channel
     raw_hpc_lfp = hippocampus_lfp[ripple_start_index:ripple_end_index, 0]
     raw_vc_lfp  = visual_lfp[ripple_start_index:ripple_end_index, 0]
 
     #SWRs for one cahnnel
-    swr_visual = swr_visual[ripple_start_index:ripple_end_index, 0]
-    swr_hippocampus = swr_hippocampus[ripple_start_index:ripple_end_index, 0]
+    swr_vis  = swr_visual[ripple_start_index:ripple_end_index, 0]
+    swr_hipp = swr_hippocampus[ripple_start_index:ripple_end_index, 0]
+
+    #Mua activity calculations
+    vis_mua   = visual_mua[ripple_start_index:ripple_end_index]
+    hippo_mua = hippocampus_mua[ripple_start_index:ripple_end_index]
+
+    return(seg_time,
+           raw_hpc_lfp,
+           raw_vc_lfp,
+           swr_vis,
+           swr_hipp,
+           vis_mua,
+           hippo_mua)
+
+#Plot per ripple
+for ripple_id in range(1):
+    #Define a 4 by 4 grid
+    fig, axs = plt.subplots(nrows = 4, ncols = 4, sharey = 'row')
+
+    #Return variables
+    pre_seg_time, pre_raw_hpc_lfp, pre_raw_vc_lfp, pre_swr_visual, pre_swr_hippocampus, pre_visual_mua, pre_hippocampus_mua        = plot_pre_or_post_ripples(pre_sleep_ripple_times, ripple_id, 0)
+    post_seg_time, post_raw_hpc_lfp, post_raw_vc_lfp, post_swr_visual, post_swr_hippocampus, post_visual_mua, post_hippocampus_mua = plot_pre_or_post_ripples(post_sleep_ripple_times, ripple_id, buffer)
+
+    #POST TASK SLEEP
 
     #Plot the first row of raw LFP data
-    axs[0][0].plot(seg_time, raw_hpc_lfp, 'k')
-    axs[0][0].set_title('raw LFP : HPC')
+    axs[0][2].plot(post_seg_time, post_raw_hpc_lfp, 'k')
+    axs[0][2].set_title('Post_Task_Sleep \n raw LFP : HPC')
+    axs[0][2].margins(x=0)
+    axs[0][2].set_ylabel('mV')
+    axs[0][2].get_xaxis().set_visible(False)
+
+    axs[0][3].plot(post_seg_time, post_raw_vc_lfp, 'k')
+    axs[0][3].set_title('Post_Task_Sleep \n raw LFP : VC')
+    axs[0][3].margins(x=0)
+    axs[0][3].get_yaxis().set_visible(False)
+    axs[0][3].get_xaxis().set_visible(False)
+
+    #Plot the second row containing CWT within the MUA range
+    t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(post_raw_hpc_lfp,
+                                             fs,
+                                             freq_range = [500, 3000])
+    axs[1][2].pcolormesh(t_cwt, f_cwt, psd_cwt, **kwargs_dict)
+    axs[1][2].set_title('CWT 500-3000hz : HPC')
+    axs[1][2].get_xaxis().set_visible(False)
+    axs[1][2].set_ylabel('hZ')
+
+    t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(post_raw_vc_lfp,
+                                             fs,
+                                             freq_range = [500, 3000])
+    axs[1][3].pcolormesh(t_cwt, f_cwt, psd_cwt, **kwargs_dict)
+    axs[1][3].set_title('CWT 500-3000hz : VC')
+    axs[1][3].get_xaxis().set_visible(False)
+
+    #Plot the third row containing the filtered ripple band
+    axs[2][2].plot(post_seg_time, post_swr_hippocampus, 'k')
+    axs[2][2].margins(x=0)
+    axs[2][2].set_title('Ripple 150-250hz : HPC')
+    axs[2][2].set_ylabel('SWR signal')
+    axs[2][2].get_xaxis().set_visible(False)
+
+    axs[2][3].plot(post_seg_time, post_swr_visual, 'k')
+    axs[2][3].margins(x=0)
+    axs[2][3].set_title('Ripple 150-250hz : VC')
+    axs[2][3].get_xaxis().set_visible(False)
+
+    #Plot the MUA activity on the final row
+    axs[3][2].plot(post_seg_time, post_hippocampus_mua, 'k')
+    axs[3][2].margins(x=0)
+    axs[3][2].set_title('MUA Activity >500hz : HPC')
+    axs[3][2].set_ylabel('z score \n >=3SD')
+    axs[3][2].set_xlabel('Time (Seconds)')
+
+    axs[3][3].plot(post_seg_time, post_visual_mua, 'k')
+    axs[3][3].margins(x=0)
+    axs[3][3].set_title('MUA Activity >500hz : VC')
+    axs[3][3].set_xlabel('Time (Seconds)')
+
+    #PRE TASK SLEEP----------------------------
+
+    #Plot the first row of raw LFP data
+    axs[0][0].plot(pre_seg_time, pre_raw_hpc_lfp, 'k')
+    axs[0][0].set_title('Pre_Task_Sleep \n raw LFP : HPC')
     axs[0][0].margins(x=0)
     axs[0][0].set_ylabel('mV')
     axs[0][0].get_xaxis().set_visible(False)
 
-    axs[0][1].plot(seg_time, raw_vc_lfp, 'k')
-    axs[0][1].set_title('raw LFP : VC')
+    axs[0][1].plot(pre_seg_time, pre_raw_vc_lfp, 'k')
+    axs[0][1].set_title('Pre_Task_Sleep \n raw LFP : VC')
     axs[0][1].margins(x=0)
     axs[0][1].get_yaxis().set_visible(False)
     axs[0][1].get_xaxis().set_visible(False)
 
     #Plot the second row containing CWT within the MUA range
-    t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(raw_hpc_lfp,
+    t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(pre_raw_hpc_lfp,
                                              fs,
                                              freq_range = [500, 3000])
     axs[1][0].pcolormesh(t_cwt, f_cwt, psd_cwt, **kwargs_dict)
@@ -86,7 +178,7 @@ for ripple_id in range(1):
     axs[1][0].get_xaxis().set_visible(False)
     axs[1][0].set_ylabel('hZ')
 
-    t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(raw_vc_lfp,
+    t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(pre_raw_vc_lfp,
                                              fs,
                                              freq_range = [500, 3000])
     axs[1][1].pcolormesh(t_cwt, f_cwt, psd_cwt, **kwargs_dict)
@@ -94,104 +186,130 @@ for ripple_id in range(1):
     axs[1][1].get_xaxis().set_visible(False)
 
     #Plot the third row containing the filtered ripple band
-    axs[2][0].plot(seg_time, swr_hippocampus, 'k')
+    axs[2][0].plot(pre_seg_time, pre_swr_hippocampus, 'k')
     axs[2][0].margins(x=0)
     axs[2][0].set_title('Ripple 150-250hz : HPC')
-    axs[2][0].set_ylabel('mV')
+    axs[2][0].set_ylabel('SWR signal')
     axs[2][0].get_xaxis().set_visible(False)
 
-    axs[2][1].plot(seg_time, swr_visual, 'k')
+    axs[2][1].plot(pre_seg_time, pre_swr_visual, 'k')
     axs[2][1].margins(x=0)
     axs[2][1].set_title('Ripple 150-250hz : VC')
     axs[2][1].get_xaxis().set_visible(False)
 
+    #Plot the MUA activity on the final row
+    axs[3][0].plot(pre_seg_time, pre_hippocampus_mua, 'k')
+    axs[3][0].margins(x=0)
+    axs[3][0].set_title('MUA Activity >500hz : HPC')
+    axs[3][0].set_ylabel('z score \n >=3SD')
+    axs[3][0].set_xlabel('Time (Seconds)')
+
+    axs[3][1].plot(pre_seg_time, pre_visual_mua, 'k')
+    axs[3][1].margins(x=0)
+    axs[3][1].set_title('MUA Activity >500hz : VC')
+    axs[3][1].set_xlabel('Time (Seconds)')
+
+    #Super title
+    fig.suptitle('Predicted ripple number:{} - HPC vs VC'.format(ripple_id), fontweight='bold')
+
+    #Save graphs
+    # plt.savefig("/Users/freeman/Documents/saleem_folder/viz/marta_dark_day_6/vc_VS_HPC_ripple_num_{}".format(ripple_id), dpi=100)
+
     #Plot the graphs
     plt.show()
+    # plt.close(fig)
 
-# #Mua code
-# filtered_data = filt_mua(lfp_data = downsampled_lfp_matrix,
-#                          fs = mua_fs)
-# mua_activity  = threshold(filtered_data)
-# smoothed_mua = gaussian_smooth(mua_activity)
-#
-# # smoothed_data = gaussian_smooth(data = filtered_data,
-# #                                 sampling_frequency = mua_fs)
-#
-# #PLotting
-# mua_time = simulate_time(n_samples, mua_fs)
-# plt.plot(mua_time, smoothed_mua[:,0])
-# plt.xlabel("Seconds")
-# plt.title("MUA activity, smoothed to 50ms, threshold 4SD, fs = 6kHz")
-# plt.show()
-#
-# hpc_data = lfp_matrix[:, 8:] #select channels
-# visual_data = lfp_matrix[:, :4] #select channels
-# num_of_channels = hpc_data.shape[1]
-# raw_data, n_samples = helper.downsample(hpc_data, org_fs, fs)
-# raw_visual_data, visual_n_samples = helper.downsample(visual_data, org_fs, fs)
-# filtered_signal = filter_ripple_band(raw_data)
-# filtered_visual = filter_ripple_band(raw_visual_data)
-#
-# #create time
-# time = simulate_time(n_samples, fs)
-#
-# for ripple_id in range(50):
-#     fig, axs = plt.subplots(nrows = 3, ncols = 2)
-#     ripple_start_index = int(ripple_times[ripple_id][0] * fs) - padding
-#     ripple_end_index = int(ripple_times[ripple_id][1] * fs) + padding
-#     seg_time = time[ripple_start_index :ripple_end_index] #Produces an array of times
-#
-#     #hPC data
-#     hpc_signal = filtered_signal[ripple_start_index:ripple_end_index, 0]
-#     raw__HPC_signal = raw_data[ripple_start_index:ripple_end_index, 0]
-#
-#     #vc data
-#     visual_signal = filtered_visual[ripple_start_index:ripple_end_index, 0]
-#     raw_viz_signal = raw_visual_data[ripple_start_index:ripple_end_index, 0]
-#
-#     #Hippocampus plots----------------------
-#     #Plot the raw LFP trace for the HPC
-#     axs[0][0].plot(seg_time, raw__HPC_signal, 'k')
-#     axs[0][0].set_title('raw LFP trace for the HPC')
-#     axs[0][0].margins(x=0)
-#     axs[0][0].get_xaxis().set_visible(False)
-#
-#     #Plot the CWT on the filtered HPC LFP signal
-#     t_wsst, f_wsst, psd_wsst, kwargs_dict = cwt(hpc_signal,
-#                                                 fs,
-#                                                 freq_range = [1, 500])
-#     axs[1][0].pcolormesh(t_wsst, f_wsst, psd_wsst, **kwargs_dict)
-#     axs[1][0].set_title('CWT on the 150-250hz bandpass HPC LFP signal')
-#     axs[1][0].get_xaxis().set_visible(False)
-#
-#     #PLot the filtered LFP on the ripple
-#     axs[2][0].plot(seg_time, hpc_signal, 'k')
-#     axs[2][0].margins(x=0)
-#     axs[2][0].set_title('Ripple trace - HPC - LFP - Bandpass 150-250hz')
-#
-#     #VC plots -------------------------------
-#     #Plot raw trace on the vc
-#     axs[0][1].plot(seg_time, raw_viz_signal, 'k')
-#     axs[0][1].set_title('raw LFP trace for the VC')
-#     axs[0][1].margins(x=0)
-#
-#
-#     #CWT plot the unfiltered visual LFP
-#     t_wsst, f_wsst, psd_wsst, kwargs_dict = cwt(raw_viz_signal,
-#                                                 fs,
-#                                                 freq_range = [1, 500])
-#     axs[1][1].pcolormesh(t_wsst, f_wsst, psd_wsst, **kwargs_dict)
-#     axs[1][1].set_title('CWT on the raw VC LFP signal')
-#
-#     #Hide blank plot
-#     axs[2][1].axis('off')
-#
 #     #Set labels
-#     fig.supylabel('Hz')
-#     fig.supxlabel('Time (s)')
 #     # fig.set_size_inches(14, 17) #width and height of image
 #     fig.suptitle('Predicted ripple number:{} - HPC vs VC'.format(ripple_id))
-#     plt.savefig("/Users/freeman/Documents/saleem_folder/viz/marta_dark_day_6/vc_VS_HPC_ripple_num_{}".format(ripple_id), dpi=100)
+
+
+
+# #Plot per ripple
+# for ripple_id in range(1):
+#     #Define a 4 by 4 grid
+#     fig, axs = plt.subplots(nrows = 4, ncols = 4, sharey = 'row')
+#
+#     #Create ripple windows and padding for x axis
+#     ripple_start_index = int(pre_sleep_ripple_times[ripple_id][0] * fs) - padding
+#     ripple_end_index = int(pre_sleep_ripple_times[ripple_id][1] * fs) + padding
+#     seg_time = time[ripple_start_index : ripple_end_index]
+#
+#     #Raw data for one channel
+#     raw_hpc_lfp = hippocampus_lfp[ripple_start_index:ripple_end_index, 0]
+#     raw_vc_lfp  = visual_lfp[ripple_start_index:ripple_end_index, 0]
+#
+#     #SWRs for one cahnnel
+#     swr_visual = swr_visual[ripple_start_index:ripple_end_index, 0]
+#     swr_hippocampus = swr_hippocampus[ripple_start_index:ripple_end_index, 0]
+#
+#     #Mua activity calculations
+#     visual_mua      = visual_mua[ripple_start_index:ripple_end_index]
+#     hippocampus_mua = hippocampus_mua[ripple_start_index:ripple_end_index]
+#
+#     #Plot the first row of raw LFP data
+#     axs[0][0].plot(seg_time, raw_hpc_lfp, 'k')
+#     axs[0][0].set_title('raw LFP : HPC')
+#     axs[0][0].margins(x=0)
+#     axs[0][0].set_ylabel('mV')
+#     axs[0][0].get_xaxis().set_visible(False)
+#
+#     axs[0][1].plot(seg_time, raw_vc_lfp, 'k')
+#     axs[0][1].set_title('raw LFP : VC')
+#     axs[0][1].margins(x=0)
+#     axs[0][1].get_yaxis().set_visible(False)
+#     axs[0][1].get_xaxis().set_visible(False)
+#
+#     #Plot the second row containing CWT within the MUA range
+#     t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(raw_hpc_lfp,
+#                                              fs,
+#                                              freq_range = [500, 3000])
+#     axs[1][0].pcolormesh(t_cwt, f_cwt, psd_cwt, **kwargs_dict)
+#     axs[1][0].set_title('CWT 500-3000hz : HPC')
+#     axs[1][0].get_xaxis().set_visible(False)
+#     axs[1][0].set_ylabel('hZ')
+#
+#     t_cwt, f_cwt, psd_cwt, kwargs_dict = cwt(raw_vc_lfp,
+#                                              fs,
+#                                              freq_range = [500, 3000])
+#     axs[1][1].pcolormesh(t_cwt, f_cwt, psd_cwt, **kwargs_dict)
+#     axs[1][1].set_title('CWT 500-3000hz : VC')
+#     axs[1][1].get_xaxis().set_visible(False)
+#
+#     #Plot the third row containing the filtered ripple band
+#     axs[2][0].plot(seg_time, swr_hippocampus, 'k')
+#     axs[2][0].margins(x=0)
+#     axs[2][0].set_title('Ripple 150-250hz : HPC')
+#     axs[2][0].set_ylabel('SWR signal')
+#     axs[2][0].get_xaxis().set_visible(False)
+#
+#     axs[2][1].plot(seg_time, swr_visual, 'k')
+#     axs[2][1].margins(x=0)
+#     axs[2][1].set_title('Ripple 150-250hz : VC')
+#     axs[2][1].get_xaxis().set_visible(False)
+#
+#     #Plot the MUA activity on the final row
+#     axs[3][0].plot(seg_time, hippocampus_mua, 'k')
+#     axs[3][0].margins(x=0)
+#     axs[3][0].set_title('MUA Activity >500hz : HPC')
+#     axs[3][0].set_ylabel('z score \n >=3SD')
+#     axs[3][0].set_xlabel('Time (Seconds)')
+#
+#     axs[3][1].plot(seg_time, visual_mua, 'k')
+#     axs[3][1].margins(x=0)
+#     axs[3][1].set_title('MUA Activity >500hz : VC')
+#     axs[3][1].set_xlabel('Time (Seconds)')
+#
+#     #Super title
+#     fig.suptitle('Predicted ripple number:{} - HPC vs VC'.format(ripple_id))
+#
+#     #Save graphs
+#     # plt.savefig("/Users/freeman/Documents/saleem_folder/viz/marta_dark_day_6/vc_VS_HPC_ripple_num_{}".format(ripple_id), dpi=100)
+#
+#     #Plot the graphs
 #     plt.show()
 #     # plt.close(fig)
-#     print("Single spectorgram file completed")
+#
+# #     #Set labels
+# #     # fig.set_size_inches(14, 17) #width and height of image
+# #     fig.suptitle('Predicted ripple number:{} - HPC vs VC'.format(ripple_id))

@@ -2,6 +2,7 @@ import numpy as np
 import sys
 from utils.convert_and_ingest_data_types.auto_mat_to_python import convert_matlab_struct
 import resampy
+from scipy.ndimage.filters import gaussian_filter
 
 def interpolate(variable, current_fs, desired_fs):
     """Converts a lower sampled variable to match a higher sampled varible"""
