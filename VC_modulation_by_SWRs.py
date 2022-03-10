@@ -132,20 +132,24 @@ for ripple_id in range(6):
     axs[3][2].margins(x=0)
     axs[3][2].set_title('MUA Activity >500hz : HPC')
     axs[3][2].set_xlabel('Time (Seconds)')
+    axs[3][2].get_xaxis().set_visible(False)
 
     axs[3][3].plot(post_visual_mua, 'k')
     axs[3][3].margins(x=0)
     axs[3][3].set_title('MUA Activity >500hz : VC')
+    axs[3][3].get_xaxis().set_visible(False)
 
     # Plot average power across time
     post_hpc_avg_psd = np.average(post_hpc_psd_cwt, axis=0)
     post_seg_time = post_seg_time - post_seg_time[0]
     axs[4][2].plot(post_seg_time, post_hpc_avg_psd)
     axs[4][2].set_xlabel('Time (Seconds)')
+    axs[4][2].margins(x=0)
 
     post_vc_avg_psd = np.average(post_vc_psd_cwt, axis=0)
     axs[4][3].plot(post_seg_time, post_vc_avg_psd)
     axs[4][3].set_xlabel('Time (Seconds)')
+    axs[4][3].margins(x=0)
 
     # PRE TASK SLEEP----------------------------
 
@@ -167,7 +171,7 @@ for ripple_id in range(6):
     axs[2][0].pcolormesh(pre_hpc_t_cwt, pre_hpc_f_cwt, pre_hpc_psd_cwt, **kwargs_dict)
     axs[2][0].set_title('CWT 500-3000hz : HPC')
     axs[2][0].get_xaxis().set_visible(False)
-    axs[2][0].set_ylabel('hZ')
+    axs[2][0].set_ylabel('Hz')
 
     pre_vc_t_cwt, pre_vc_f_cwt, pre_vc_psd_cwt, kwargs_dict = cwt(pre_raw_vc_lfp, fs, freq_range=[500, 3000])
     axs[2][1].pcolormesh(pre_vc_t_cwt, pre_vc_f_cwt, pre_vc_psd_cwt, **kwargs_dict)
@@ -178,7 +182,7 @@ for ripple_id in range(6):
     axs[1][0].plot(pre_seg_time, pre_swr_hippocampus, 'k')
     axs[1][0].margins(x=0)
     axs[1][0].set_title('Ripple 150-250hz : HPC')
-    axs[1][0].set_ylabel('SWR signal')
+    axs[1][0].set_ylabel('mV')
     axs[1][0].get_xaxis().set_visible(False)
 
     axs[1][1].plot(pre_seg_time, pre_swr_visual, 'k')
@@ -191,23 +195,27 @@ for ripple_id in range(6):
     axs[3][0].margins(x=0)
     axs[3][0].set_title('MUA Activity >500hz : HPC')
     axs[3][0].set_xlabel('Time (Seconds)')
-    axs[3][0].set_ylabel('50ms counts > 2SD')
+    axs[3][0].set_ylabel('counts > 2SD')
+    axs[3][0].get_xaxis().set_visible(False)
 
     axs[3][1].plot(pre_visual_mua, 'k')
     axs[3][1].margins(x=0)
     axs[3][1].set_title('MUA Activity >500hz : VC')
     axs[3][1].set_xlabel('Time (Seconds)')
+    axs[3][1].get_xaxis().set_visible(False)
 
     # Plot average power across time
     pre_hpc_avg_psd = np.average(pre_hpc_psd_cwt, axis=0)
     pre_seg_time = pre_seg_time - pre_seg_time[0]
     axs[4][0].plot(pre_seg_time, pre_hpc_avg_psd)
     axs[4][0].set_xlabel('Time (Seconds)')
-    axs[4][0].set_ylabel('Avg normalised power')
+    axs[4][0].set_ylabel('Avg \n normalised power')
+    axs[4][0].margins(x=0)
 
     pre_vc_avg_psd = np.average(pre_vc_psd_cwt, axis=0)
     axs[4][1].plot(pre_seg_time, pre_vc_avg_psd)
     axs[4][1].set_xlabel('Time (Seconds)')
+    axs[4][1].margins(x=0)
 
     # Super title
     fig.suptitle('Predicted ripple number:{} - HPC vs VC'.format(ripple_id), fontweight='bold')
