@@ -11,13 +11,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ripple_detection import filter_ripple_band
 
+# Built in
+# import sys
+# sys.settrace()  # trace segmentation fault and increase ulimit stack limit
+
 # Load data
 obj = Meta()
-base_path = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/"
-pre_sleep_ripple_times = np.load(base_path + obj.light["Day_7_Light"]["pre"])
-post_sleep_ripple_times = np.load(base_path + obj.light["Day_7_Light"]["post"])
-LFP = np.load(base_path + obj.light["Day_7_Light"]["lfp"])
-mat_file = obj.light["Day_7_Light"]["mat"]
+session = "Day_6_Dark"
+base_path = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/ripple_times/"
+pre_sleep_ripple_times = np.load(base_path + obj.dictionary[session]["pre"])
+post_sleep_ripple_times = np.load(base_path + obj.dictionary[session]["post"])
+LFP = np.load(obj.dictionary[session]["lfp"])
+mat_file = obj.dictionary[session]["mat"]
 
 # Parameters
 org_fs = 30000  # What is the original fs of the ephys recording device
@@ -30,8 +35,8 @@ downsampled_lfp_matrix, n_samples = helper.downsample(LFP,
                                                       desired_fs=fs)
 
 # Select Visual Cortex and Hippocampal channels
-visual_lfp = downsampled_lfp_matrix[:, slice(obj.light["Day_7_Light"]["vc_chans"][0], obj.light["Day_7_Light"]["vc_chans"][-1] + 1, 1)]
-hippocampus_lfp = downsampled_lfp_matrix[:, slice(obj.light["Day_7_Light"]["hpc_chans"][0], obj.light["Day_7_Light"]["hpc_chans"][-1] + 1, 1)]
+visual_lfp = downsampled_lfp_matrix[:, slice(obj.dictionary[session]["vc_chans"][0], obj.dictionary[session]["vc_chans"][-1] + 1, 1)]
+hippocampus_lfp = downsampled_lfp_matrix[:, slice(obj.dictionary[session]["hpc_chans"][0], obj.dictionary[session]["hpc_chans"][-1] + 1, 1)]
 
 # Filter data for ripple visulisation
 swr_visual = filter_ripple_band(visual_lfp)
@@ -82,7 +87,7 @@ def plot_pre_or_post_ripples(ripple_times, ripple_id, post_task_buffer):
 
 
 # Plot per ripple
-for ripple_id in range(6):
+for ripple_id in range(50):
 
     # Define a 4 by 4 grid
     fig, axs = plt.subplots(nrows=5, ncols=4, sharey='row')
@@ -218,11 +223,12 @@ for ripple_id in range(6):
     axs[4][1].margins(x=0)
 
     # Super title
-    fig.suptitle('Predicted ripple number:{} - HPC vs VC'.format(ripple_id), fontweight='bold')
+    fig.suptitle(session + ' - Predicted ripple number:{} - HPC vs VC'.format(ripple_id), fontweight='bold')
 
     # Save graphs
-    # plt.savefig("/Users/freeman/Documents/saleem_folder/viz/marta_dark_day_6/vc_VS_HPC_ripple_num_{}".format(ripple_id), dpi=100)
+    fig.set_size_inches(20, 10)  # width and height of image
+    plt.savefig("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/modulation_analysis/" + session + "/" + session + "_ripple_id_: " + str(ripple_id), dpi=100)
 
     # Plot the graphs
     plt.show()
-    # plt.close(fig)
+    plt.close(fig)
