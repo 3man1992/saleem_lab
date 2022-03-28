@@ -2,8 +2,11 @@
 
 This github repo is a collection of knowledge gained during my PhD rotation in the Saleem Lab. Primarily this repo is a signal processing repository for analysing local field potential (LFP) data from the hippocampus.
 
-Some useful general scripts included are:
+Some useful aspects are:
 + A matlab (.mat) converter script into python dictionarys. This file is found within utils and is called auto_mat_to_python.py
++ A collection of sharp wave ripple extraction techniques found in the SWR dir
++ MUA activity calculations
++ An improved meta_data system for producing code across many sessions
 
 Below is an example output from the MTA_power_spec script which utilises multi-taper analysis to produce a power spectral density estimation for a single channel from a tetrode recording.
 
@@ -23,6 +26,9 @@ Below are example raw traces of a sharp wave ripple detection algorithm compared
   <img width="528" alt="Screenshot 2022-01-31 at 17 19 47" src="https://user-images.githubusercontent.com/22481774/151986847-94992946-ac9d-48a3-a4e9-1c3248012d6e.png">
 </p>
 
-Error message handling:
-+ ValueError: 'n_tapers' of 5 is greater than the 1 that satisfied the minimum energy concentration criteria of 0.5. -> Change the number of tapers used to the recommended number
-+ ValueError: None of the tapers satisfied the minimum energy concentration criteria of 0.95 -> min_lambda parameter can be changed (though what does this mean for the analyis)
+Below is an example of MUA modulation relative to SWR time comparing the visual cortex and hpc.
+
+<p align="center">
+  <img width="1448" alt="Screenshot 2022-03-28 at 11 37 41" src="https://user-images.githubusercontent.com/22481774/160380807-9639d648-ba0b-41dd-aa9a-13eb1892e9be.png">
+</p>
+
