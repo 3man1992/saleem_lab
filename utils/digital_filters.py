@@ -1,19 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
-import inspect
 from scipy.signal import sosfiltfilt
 
-#Create second order coeff
+
+# Create second order coeff
 def butter_bandpass(lowcut, highcut, fs, order=4):
     "Set at 4th order to match paper by Ahmadi et al 2021"
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
-    sos = signal.butter(N = order,
-                        Wn = [low, high],
-                        btype = 'bandpass',
-                        output= 'sos',
+    sos = signal.butter(N=order,
+                        Wn=[low, high],
+                        btype='bandpass',
+                        output='sos',
                         fs=fs)
     return sos
 
@@ -25,16 +25,21 @@ def butter_bandpass_filter(data, lowcut, highcut, fs):
     filtered_data = sosfiltfilt(sos, data) #Trying to remove axis to what happens
     return(filtered_data)
 
+
 def highpass_filtfilt(sig, sampling_freq, cut_off):
     """Set at 4th order to match paper by Ahmadi et al 2021
     Using highpass to avoid alaising associated with bandpass.
     Used for MUA filtering"""
-    order = 4
-    sos = signal.butter(N = order,
-                        Wn = cut_off,
-                        btype = 'highpass',
-                        output= 'sos',
-                        fs = sampling_freq)
+    if len(sig) != 0:
+        order = 4
+        print("Length of signal going through filt filt:", len(sig))
+        sos = signal.butter(N=order,
+                            Wn=cut_off,
+                            btype='highpass',
+                            output='sos',
+                            fs=sampling_freq)
+    else:
+        raise Exception("Can't filter an empty signal")
     return(sosfiltfilt(sos, sig))
 
 #For testing filters

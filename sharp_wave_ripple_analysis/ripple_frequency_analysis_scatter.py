@@ -20,3 +20,10 @@ def avg_calc_ripples_per_minute(ripple_centres):  # Assumes ripple_centers is in
     bins = list(range(0, 3600, 60))  # Create bins per minute up to a total time in seconds. 3600 seconds is one hour
     counts, bin_edges = np.histogram(ripple_centres, bins=bins)
     return(np.average(counts))
+
+
+# A function that takes in a list of ripple centers and calcs avg ripples per minute
+def hist_calc_ripples_per_minute(ripple_centres):  # Assumes ripple_centers is in seconds
+    bins = list(range(0, 3600, 60))  # Create bins per minute up to a total time in seconds. 3600 seconds is one hour
+    counts, bin_edges = np.histogram(ripple_centres, bins=bins)
+    return(counts)

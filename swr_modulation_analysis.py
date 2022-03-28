@@ -1,6 +1,6 @@
 # Custom Libaries
 from utils import helper
-from utils.meta_data import Meta
+from meta_data import Meta
 from visulisations.generate_spectograms import cwt
 from visulisations.mua import calculate_mua
 from utils.convert_and_ingest_data_types.auto_mat_to_python import convert_matlab_struct
@@ -18,9 +18,8 @@ from ripple_detection import filter_ripple_band
 # Load data
 obj = Meta()
 session = "Day_6_Dark"
-base_path = "/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/np_arrays/ripple_times/"
-pre_sleep_ripple_times = np.load(base_path + obj.dictionary[session]["pre"])
-post_sleep_ripple_times = np.load(base_path + obj.dictionary[session]["post"])
+pre_sleep_ripple_times = np.load(obj.dictionary[session]["pre"])
+post_sleep_ripple_times = np.load(obj.dictionary[session]["post"])
 LFP = np.load(obj.dictionary[session]["lfp"])
 mat_file = obj.dictionary[session]["mat"]
 
@@ -28,6 +27,7 @@ mat_file = obj.dictionary[session]["mat"]
 org_fs = 30000  # What is the original fs of the ephys recording device
 fs = 6000  # What do you want to downsample the data to
 padding = 3000  # What extra time do you want on ripple window - If fs is 3000 then 1500 is half a second either side
+channel = 3
 
 # Downsample LFP data to make it faster to process
 downsampled_lfp_matrix, n_samples = helper.downsample(LFP,
@@ -35,8 +35,12 @@ downsampled_lfp_matrix, n_samples = helper.downsample(LFP,
                                                       desired_fs=fs)
 
 # Select Visual Cortex and Hippocampal channels
-visual_lfp = downsampled_lfp_matrix[:, slice(obj.dictionary[session]["vc_chans"][0], obj.dictionary[session]["vc_chans"][-1] + 1, 1)]
-hippocampus_lfp = downsampled_lfp_matrix[:, slice(obj.dictionary[session]["hpc_chans"][0], obj.dictionary[session]["hpc_chans"][-1] + 1, 1)]
+visual_lfp = downsampled_lfp_matrix[:, slice(obj.dictionary[session]["vc_chans"][0],
+                                             obj.dictionary[session]["vc_chans"][-1] + 1,
+                                             1)]
+hippocampus_lfp = downsampled_lfp_matrix[:, slice(obj.dictionary[session]["hpc_chans"][0],
+                                                  obj.dictionary[session]["hpc_chans"][-1] + 1,
+                                                  1)]
 
 # Filter data for ripple visulisation
 swr_visual = filter_ripple_band(visual_lfp)
@@ -44,6 +48,7 @@ swr_hippocampus = filter_ripple_band(hippocampus_lfp)
 
 # Simulate time
 time = simulate_time(n_samples, fs)
+print("\nTotal time of session in minutes\n", time / 60)
 
 # Calculate buffer for post task ripple analysis
 matlab_object = convert_matlab_struct(mat_file)
@@ -51,10 +56,13 @@ time_mat = matlab_object.dic['t']
 linear_time = matlab_object.dic['linear']['timestamps']
 pre_task_sleep_time, post_task_sleep_time = helper.determine_sleep_times(time_mat, linear_time)
 buffer = (post_task_sleep_time[0] - pre_task_sleep_time[0]) * fs
+print("#####")
+print("Post_task_sleep occured at: {} minutes".format((post_task_sleep_time[0] - pre_task_sleep_time[0]) / 60))
+print("##### \n")
 
 
 # Define a func to output differences for pre task sleep and post task sleep
-def plot_pre_or_post_ripples(ripple_times, ripple_id, post_task_buffer):
+def plot_pre_or_post_ripples(ripple_times, ripple_id, post_task_buffer, channel):
     """Takes in pre or post sleep ripples and returns:
     the relevant indexed data. Post task buffer is used to ensure index is correct
     considering post task occurs midway lfp signal and time starts from 0.
@@ -66,15 +74,17 @@ def plot_pre_or_post_ripples(ripple_times, ripple_id, post_task_buffer):
     seg_time = time[ripple_start_index:ripple_end_index]
 
     # Raw data for one channel
-    raw_hpc_lfp = hippocampus_lfp[ripple_start_index:ripple_end_index, 0]
-    raw_vc_lfp = visual_lfp[ripple_start_index:ripple_end_index, 0]
+    raw_hpc_lfp = hippocampus_lfp[ripple_start_index:ripple_end_index, channel]
+    raw_vc_lfp = visual_lfp[ripple_start_index:ripple_end_index, channel]
 
     # SWRs for one cahnnel
-    swr_vis = swr_visual[ripple_start_index:ripple_end_index, 0]
-    swr_hipp = swr_hippocampus[ripple_start_index:ripple_end_index, 0]
+    swr_vis = swr_visual[ripple_start_index:ripple_end_index, channel]
+    swr_hipp = swr_hippocampus[ripple_start_index:ripple_end_index, channel]
 
     # Mua activity calculations
+    print("Calculating MUA activity in the visual cortex")
     vis_mua = calculate_mua(raw_vc_lfp, fs)
+    print("Calculating MUA activity in the hippocampus")
     hippo_mua = calculate_mua(raw_hpc_lfp, fs)
 
     return(seg_time,
@@ -93,8 +103,16 @@ for ripple_id in range(50):
     fig, axs = plt.subplots(nrows=5, ncols=4, sharey='row')
 
     # Return variables
-    pre_seg_time, pre_raw_hpc_lfp, pre_raw_vc_lfp, pre_swr_visual, pre_swr_hippocampus, pre_visual_mua, pre_hippocampus_mua = plot_pre_or_post_ripples(pre_sleep_ripple_times, ripple_id, 0)
-    post_seg_time, post_raw_hpc_lfp, post_raw_vc_lfp, post_swr_visual, post_swr_hippocampus, post_visual_mua, post_hippocampus_mua = plot_pre_or_post_ripples(post_sleep_ripple_times, ripple_id, buffer)
+    print("Pre task sleep calculations")
+    pre_seg_time, pre_raw_hpc_lfp, pre_raw_vc_lfp, pre_swr_visual, pre_swr_hippocampus, pre_visual_mua, pre_hippocampus_mua = plot_pre_or_post_ripples(pre_sleep_ripple_times,
+                                                                                                                                                       ripple_id,
+                                                                                                                                                       post_task_buffer=0,
+                                                                                                                                                       channel=channel)
+    print("Post task sleep calculations")
+    post_seg_time, post_raw_hpc_lfp, post_raw_vc_lfp, post_swr_visual, post_swr_hippocampus, post_visual_mua, post_hippocampus_mua = plot_pre_or_post_ripples(post_sleep_ripple_times,
+                                                                                                                                                              ripple_id,
+                                                                                                                                                              post_task_buffer=0,
+                                                                                                                                                              channel=channel)
 
     # POST TASK SLEEP
 
@@ -227,7 +245,7 @@ for ripple_id in range(50):
 
     # Save graphs
     fig.set_size_inches(20, 10)  # width and height of image
-    plt.savefig("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/modulation_analysis/" + session + "/" + session + "_ripple_id_: " + str(ripple_id), dpi=100)
+    plt.savefig("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/modulation_analysis/" + session + "/" + session + str(channel) + "_ripple_id_: " + str(ripple_id), dpi=100)
 
     # Plot the graphs
     plt.show()

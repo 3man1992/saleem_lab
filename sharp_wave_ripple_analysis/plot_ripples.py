@@ -102,30 +102,30 @@ obj = RippleAnalysis(original_fs  = org_fs,
 #Create velocity object
 velocity_data = helper.sleep_indexing("/Users/freeman/Documents/saleem_folder/data/VC_Data_Marta/Dark_Day6_250719/extracted_position.mat")
 
-# def plot_each_ripple():
-#     #Plot every ripple that was detected using Kay's method - plot first 50 ripples as a test
-#     for ripple_id in range(5):
-#         fig, axs = plt.subplots(nrows = len(obj.hippo_channels),
-#                                 ncols = 2,
-#                                 sharex=True)
-#         ripple_start_index = int(obj.ripple_times[ripple_id][0] * obj.fs) - padding
-#         ripple_end_index =   int(obj.ripple_times[ripple_id][1] * obj.fs) + padding
-#         seg_time = obj.time[ripple_start_index :ripple_end_index] #Produces an array of times
-#
-#         #Plot each channel
-#         for channel_id in range(len(obj.hippo_channels)):
-#             signal     = obj.filtered_signal[ripple_start_index : ripple_end_index , channel_id]
-#             raw_signal = obj.raw_data[ripple_start_index : ripple_end_index , channel_id]
-#             axs[channel_id][0].plot(seg_time, raw_signal, 'k')
-#             axs[channel_id][0].margins(x=0)
-#             y = savgol_filter(signal, 71, 9) #Need to play around with the params still, but visually looks ok
-#             axs[channel_id][1].plot(seg_time, y, 'k')
-#             axs[channel_id][1].margins(x=0)
-#         fig.suptitle('Predicted ripple number:{} \n Column 1: Raw LFP - \n Column 2: Bandpass of 150-250hz, detected using Kay et al 2016'.format(ripple_id))
-#         fig.supxlabel('Seconds')
-#         fig.supylabel('mV')
-#         plt.show()
-#     fig.set_size_inches(10, 17) #width and height of image
-#     plt.savefig("/Users/freeman/Documents/saleem_folder/viz/marta_dark_day_6/ripple_num_{}".format(ripple_id), dpi=100)
-#     plt.close(fig)
-#     return None
+def plot_each_ripple():
+    #Plot every ripple that was detected using Kay's method - plot first 50 ripples as a test
+    for ripple_id in range(5):
+        fig, axs = plt.subplots(nrows = len(obj.hippo_channels),
+                                ncols = 2,
+                                sharex=True)
+        ripple_start_index = int(obj.ripple_times[ripple_id][0] * obj.fs) - padding
+        ripple_end_index =   int(obj.ripple_times[ripple_id][1] * obj.fs) + padding
+        seg_time = obj.time[ripple_start_index :ripple_end_index] #Produces an array of times
+
+        #Plot each channel
+        for channel_id in range(len(obj.hippo_channels)):
+            signal     = obj.filtered_signal[ripple_start_index : ripple_end_index , channel_id]
+            raw_signal = obj.raw_data[ripple_start_index : ripple_end_index , channel_id]
+            axs[channel_id][0].plot(seg_time, raw_signal, 'k')
+            axs[channel_id][0].margins(x=0)
+            y = savgol_filter(signal, 71, 9) #Need to play around with the params still, but visually looks ok
+            axs[channel_id][1].plot(seg_time, y, 'k')
+            axs[channel_id][1].margins(x=0)
+        fig.suptitle('Predicted ripple number:{} \n Column 1: Raw LFP - \n Column 2: Bandpass of 150-250hz, detected using Kay et al 2016'.format(ripple_id))
+        fig.supxlabel('Seconds')
+        fig.supylabel('mV')
+        plt.show()
+    fig.set_size_inches(10, 17) #width and height of image
+    plt.savefig("/Users/freeman/Documents/saleem_folder/viz/marta_dark_day_6/ripple_num_{}".format(ripple_id), dpi=100)
+    plt.close(fig)
+    return None

@@ -1,7 +1,7 @@
 # Custom Libraries requried
 from utils.digital_filters import highpass_filtfilt
 
-#OS libraries
+# OS libraries
 from scipy.stats import zscore
 import numpy as np
 
@@ -101,14 +101,37 @@ def bin_and_count_activty_above_zthreshold(boolean_array, rows_to_count):
     return(np.count_nonzero(boolean_array.reshape(-1, rows_to_count), axis=1))
 
 
-def calculate_mua(signal, fs):
+# Signle channel mua
+def calculate_mua(signal, fs, samples):
     """Takes in mV signal recordings, filters it with a highpass filt filt
     and then applys zscore thresholding and counts into defined bins of time"""
     mua_signal = highpass_filtfilt(signal, fs, 500)  # Highpass above 500hz
     zscored_signal = z_score_signal(mua_signal)  # What are the zscore values for the data
     threshold_zscore_boolean = threshold_zcore(zscored_signal, 2)  # Which mV recordings are above the threshold
-    counted_binned_mua_activty = bin_and_count_activty_above_zthreshold(threshold_zscore_boolean, 300)  # 300 samples assumes a fs of 6000, and defines a 50ms bin
+    counted_binned_mua_activty = bin_and_count_activty_above_zthreshold(threshold_zscore_boolean, samples)  # 300 samples assumes a fs of 6000, and defines a 50ms bin
     return counted_binned_mua_activty
+
+
+def calculate_mua_for_all_channels(meta_data, signal, session):
+    """Takes in a list of channels and produces the mua activity for each of them"""
+
+    # Define channels
+    visual_channels = meta_data.dictionary[session]["vc_chans"]
+    hippocampal_channels = meta_data.dictionary[session]["hpc_chans"]
+
+    visual_mua = {}
+    hpc_mua = {}
+
+    for visual_channel in visual_channels:
+        lfp = signal[:, visual_channel]
+        visual_mua[visual_channel] = calculate_mua(lfp, 6000)
+
+    for hpc_channel in hippocampal_channels:
+        lfp = signal[:, hippocampal_channels]
+        hpc_mua[hippocampal_channels] = calculate_mua(lfp, 6000)
+
+    return(visual_mua, hpc_mua)
+
 
 # # Takes x number of samples, averages them and returns a binned version
 # # so numrow2avg = 5 will take every 5 rows avg and then return
